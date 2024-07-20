@@ -16,7 +16,14 @@ export const createBlueBallot = async (req, res) => {
         if (existingBallot) return res.status(400).send({ message: `Sufragio ${currentYear} realizado`})
         
         const blueBallot = new BlueBallot({ user: userId, blueTeam: idTeam })
-        await blueBallot.save()
+        await blueBallot.save();
+        await blueBallot.populate({ path: 'blueTeam', populate: { path: 'partie', select: 'name colorHex acronym' } });
+        const count = await BlueBallot.countDocuments({ blueTeam: idTeam });
+        req.io.emit('newBlueBallot', {
+            blueTeam: { idTeam, name: blueBallot.blueTeam.partie.name, colorHex: blueBallot.blueTeam.partie.colorHex, acronym: blueBallot.blueTeam.partie.acronym },
+            count
+        });
+
         return res.send({ message: 'Boleta azul agregada', blueBallot })
     } catch (error) {
         console.error(error)

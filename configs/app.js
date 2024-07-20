@@ -1,3 +1,5 @@
+// app.js
+
 import express from 'express';
 import http from 'http'; // Importa el módulo http para usarlo con socket.io
 import { Server } from 'socket.io'; // Importa el servidor de socket.io
@@ -30,6 +32,7 @@ import departmentRoutes from './../src/department/department.routes.js'
 import whiteTeamRoutes from './../src/whiteTeam/white-team.routes.js';
 import statisticsRoutes from './../src/statistics/statistics.routes.js';
 
+
 // Obtener la ruta del archivo actual
 const __filename = fileURLToPath(import.meta.url);
 
@@ -40,19 +43,20 @@ const __dirname = dirname(__filename);
 const app = express();
 config();
 const port = process.env.PORT || 3057;
+const socketPort = process.env.SOCKET_PORT || 3060;
 
 // Configuración del servidor
-app.use(express.urlencoded({ extended: 'false' }));
+app.use(express.urlencoded({ extended: false }));
 app.use(helmet({
     crossOriginResourcePolicy: false,
 }));
 app.use(express.json());
 // Permitir solicitudes de origen cruzado
 app.use(cors({
-    origin: 'http://localhost:8001',
+    origin: ['http://localhost:8001', process.env.SOCKET_ORIGIN || 'https://your-production-domain.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true // Esto permite enviar cookies o cabeceras de autorización junto con las solicitudes
+    credentials: true
 }));
 app.use(morgan('dev'));
 
@@ -77,42 +81,41 @@ const server = http.createServer(app); // Crea un servidor HTTP con Express
 // Configuración de socket.io
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:8001",
+        origin: process.env.SOCKET_ORIGIN || "http://localhost:8001",
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: false
     }
-})
+});
 
 //midleware
-app.use((req, res, next)=>{
+app.use((req, res, next) => {
     req.io = io;
     next();
-})
+});
 
 // Declaración de rutas
-app.use('/user', userRoutes);//Usuario | lucidchart
-app.use('/vote', voteRoutes);//votos-ciudadano | lucidchart
-app.use('/w-ballot', whiteBallotRoutes); //papeleta-blanca | lucidchart
-app.use('/p-ballot', pinkBallotRoutes); //papeleta-rosada | lucidchart
-//altan
-app.use('/districtTeam', districtTeamRoutes)
-app.use('/profession', professionRoutes)
-app.use('/initiative', initiativesRoutes)
-app.use('/experience', experiencesRoutes)
-app.use('/greenBallot', greenBallotRoutes)
+app.use('/user', userRoutes);
+app.use('/vote', voteRoutes);
+app.use('/w-ballot', whiteBallotRoutes);
+app.use('/p-ballot', pinkBallotRoutes);
+app.use('/districtTeam', districtTeamRoutes);
+app.use('/profession', professionRoutes);
+app.use('/initiative', initiativesRoutes);
+app.use('/experience', experiencesRoutes);
+app.use('/greenBallot', greenBallotRoutes);
 app.use('/parties', politicalPartiesRoutes);
-app.use('/team', teamRoutes)
-app.use('/greenTeam', greenTeamRoutes)
-app.use('/yellowTeam', yellowTeamRoutes)
-app.use('/yellowBallot', yellowBallotRoutes)
-app.use('/blueBallot', blueBallotRoutes)
-app.use('/blueTeam', blueTeamRoutes)
-app.use('/pinkTeam', pinkTeamRoutes)
-app.use('/department', departmentRoutes)
+app.use('/team', teamRoutes);
+app.use('/greenTeam', greenTeamRoutes);
+app.use('/yellowTeam', yellowTeamRoutes);
+app.use('/yellowBallot', yellowBallotRoutes);
+app.use('/blueBallot', blueBallotRoutes);
+app.use('/blueTeam', blueTeamRoutes);
+app.use('/pinkTeam', pinkTeamRoutes);
+app.use('/department', departmentRoutes);
 app.use('/whiteTeam', whiteTeamRoutes);
 app.use('/statistics', statisticsRoutes);
 
- // Crea un servidor de websockets con socket.io
+// Crea un servidor de websockets con socket.io
 // Manejo de conexiones de sockets
 io.on('connection', (socket) => {
     console.log('New client connected');
@@ -121,16 +124,12 @@ io.on('connection', (socket) => {
     });
 });
 
-
-
+// Inicia el servidor HTTP
 export const initServer = () => {
-    app.listen(port);
-    console.log(`Server HTTP running in port ${port}`);
-}
+    server.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+    });
+};
 
-
-server.listen(2558, ()=>{
-    console.log('socket corriendo 2858')
-}
-
-)
+// Inicia el servidor de Socket.io (opcional, si necesitas escuchar en un puerto diferente)
+// io.listen(socketPort);

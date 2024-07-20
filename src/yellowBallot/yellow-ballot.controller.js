@@ -17,6 +17,12 @@ export const createYellowBallot = async (req, res) => {
         
         const yellowBallot = new YellowBallot({ user: userId, yellowTeam: idTeam })
         await yellowBallot.save()
+        await yellowBallot.populate({ path: 'yellowTeam', populate: { path: 'partie', select: 'name colorHex acronym' } });
+        const count = await YellowBallot.countDocuments({ yellowTeam: idTeam });
+        req.io.emit('newYellowBallot', {
+            yellowTeam: { idTeam, name: yellowBallot.yellowTeam.partie.name, colorHex: yellowBallot.yellowTeam.partie.colorHex, acronym: yellowBallot.yellowTeam.partie.acronym },
+            count
+        });
         return res.send({ message: 'Boleta amarilla agregada', yellowBallot })
     } catch (error) {
         console.error(error)

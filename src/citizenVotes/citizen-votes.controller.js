@@ -66,9 +66,9 @@ export const create = async (req, res) => {
         let whiteBallot = await WhiteBallot.findOne({ user: _id }).select('_id').lean()
         let yellowBallot = await YellowBallot.findOne({ user: _id }).select('_id').lean()
         // validar que todas las papeletas existan
-       /* if (!yellowBallot ||!blueBallot || !pinkBallot || !greenBallot || !whiteBallot ) {
+        if (!yellowBallot ||!blueBallot || !pinkBallot || !greenBallot || !whiteBallot ) {
             return res.status(400).send({ message: `Paquete de papeletas incompleta.` })
-        }*/
+        }
         const data = {
             user: _id,
             ballots: [

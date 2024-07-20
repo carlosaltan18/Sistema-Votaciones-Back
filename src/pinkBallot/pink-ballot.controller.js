@@ -34,6 +34,13 @@ export const create = async (req, res) => {
         //guardamos la eleccion del usuario
         const pinkBallot = new PinkBallot({ user: userId, pinkTeam: idTeam })
         await pinkBallot.save()
+        await pinkBallot.populate({ path: 'pinkTeam', populate: { path: 'partie', select: 'name colorHex acronym' } });
+        const count = await PinkBallot.countDocuments({ pinkTeam: idTeam });
+        console.log(pinkBallot);
+        req.io.emit('newPinkBallot', {
+            pinkTeam: { idTeam, name: pinkBallot.pinkTeam.partie.name, colorHex: pinkBallot.pinkTeam.partie.colorHex, acronym: pinkBallot.pinkTeam.partie.acronym },
+            count
+        });
         //respuesta de guardado
         return res.send({ message: 'Boleta rosada agregada', pinkBallot })
     } catch (err) {
